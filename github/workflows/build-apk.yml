@@ -1,0 +1,47 @@
+
+name: Build CURS Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Télécharger le projet
+        uses: actions/checkout@v4
+
+      - name: Configurer Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Configurer Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accepter les licences Android
+        run: yes | sdkmanager --licenses || true
+
+      - name: Décompresser le projet Android
+        run: |
+          unzip -o zikai-android-starter.zip -d ./android-project
+          find ./android-project -name gradlew -type f
+
+      - name: Construire APK
+        run: |
+          cd android-project
+          chmod +x $(find . -name gradlew -type f | head -n 1)
+          ./gradlew assembleDebug
+
+      - name: Publier APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CURS-Android-APK
+          path: android-project/**/build/outputs/apk/debug/*.apk
+          
